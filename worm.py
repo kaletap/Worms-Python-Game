@@ -4,7 +4,7 @@ from math import cos, sin, pi as PI
 
 SCREEN_WIDTH, SCREEN_HEIGHT = (640, 480)
 TIME_UNIT = 0.05
-SHOOTING_CHANGE_UNIT = 0.05
+SHOOTING_POWER_UNIT = 0.05
 GRAV = 1
 GRAV_WORM = 2
 JUMP_POWER = 15
@@ -16,10 +16,11 @@ WORM_PATH = "madzia_small.png"
 PLAYER_1, PLAYER_2 = 1, 2
 
 BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
 
 class Worm(pygame.sprite.Sprite):
     """Basic object in a game which can move left and right,
-    jump and shoot"""
+    jump and shoot Bullet objects"""
 
     def __init__(self, x=0, y=0, image_path=WORM_PATH, name="rick"):
         super().__init__()
@@ -41,7 +42,7 @@ class Worm(pygame.sprite.Sprite):
         self.shooting = False
 
     def shoot(self): 
-        # Creating bullet object
+        """Creates a bullet object"""
         bullet = Bullet(self.rect.x, self.rect.y, 
                         direction=self.direction, 
                         v=self.shooting_power, 
@@ -51,24 +52,26 @@ class Worm(pygame.sprite.Sprite):
         bullet_list.add(bullet)
 
     def move(self, event):
-        # Check where to move and if user is shooting
+        """Checks where to move and whether user is shooting"""
+    
         if event.type == pygame.KEYDOWN:
+            # Moving
             if event.key == pygame.K_LEFT:
                 self.change_x = -WORM_SPEED
                 self.direction = "left"
             elif event.key == pygame.K_RIGHT:
                 self.change_x = WORM_SPEED
                 self.direction = "right"
-            elif event.key == pygame.K_UP:
-                self.change_y = -WORM_SPEED
-            elif event.key == pygame.K_DOWN:
-                self.change_y = WORM_SPEED
+
+            # Jumping
             elif event.key == pygame.K_SPACE:
                 # You cannot jump if you already are jumping
                 if self.jumping is False:
                     self.jumping = True
                     self.y_0 = self.rect.y
                     self.t = 0
+
+            # Shooting
             elif event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
                 self.shooting = True
                 self.shooting_power = 0
@@ -78,31 +81,53 @@ class Worm(pygame.sprite.Sprite):
                 self.change_x = self.change_x + WORM_SPEED if self.change_x < WORM_SPEED else WORM_SPEED
             elif event.key == pygame.K_RIGHT:
                 self.change_x = self.change_x - WORM_SPEED if self.change_x > -WORM_SPEED else -WORM_SPEED
-            elif event.key == pygame.K_UP:
-                self.change_y = self.change_y + WORM_SPEED if self.change_y < WORM_SPEED else WORM_SPEED
-            elif event.key == pygame.K_DOWN:
-                self.change_y = self.change_y - WORM_SPEED if self.change_y > -WORM_SPEED else -WORM_SPEED
-            elif event.key == pygame.K_KP_ENTER:
+            elif event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
                 self.shooting = False
                 self.shoot()
 
-    def update(self):
-         # Update position after jumping
+    def update(self, walls:pygame.sprite.Group = None):
+        y_old = self.rect.y
+
+        # Update position in y_direction
         if self.jumping: 
             self.t += TIME_UNIT
             y_new = self.y_0 - JUMP_POWER * self.t + GRAV_WORM * self.t**2 / 2
-            if y_new >= SCREEN_HEIGHT - 100:
+            self.rect.y = y_new
+
+        else:
+            self.rect.y += WORM_SPEED
+
+        # Check if worm is not colliding with wall after moving up/down
+        if walls:
+            block_hit_list = pygame.sprite.spritecollide(self, walls, dokill=False)
+            # Stop jumping if we hitted something
+            if block_hit_list:
                 self.jumping = False
                 self.t = 0
-            else:
-                self.rect.y = y_new
+            for block in block_hit_list:
+                if self.rect.y >= y_old: # Going down  
+                    self.rect.bottom = block.rect.top
 
-        # Update movement in x_direction
+                elif self.rect.y < y_old: # Going up
+                    print("Going up")
+                    self.rect.top = block.rect.bottom
+
+        # Update position in x_direction
         self.rect = self.rect.move(self.change_x, 0)
+
+        # Check if worm is not colliding with wall after moving left/right
+        if walls:
+            block_hit_list = pygame.sprite.spritecollide(self, walls, dokill=False)
+
+            for block in block_hit_list:
+                if self.direction == "right":
+                    self.rect.right = block.rect.left
+                else: # self.direction == "left"
+                    self.rect.left = block.rect.right
 
         # Shooting power:
         if self.shooting:
-            self.shooting_power += SHOOTING_CHANGE_UNIT
+            self.shooting_power += SHOOTING_POWER_UNIT
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -154,6 +179,19 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 
+class Wall(pygame.sprite.Sprite):
+    """Implements simple rectangular walls"""
+    def __init__(self, x, y, width, height):
+        super().__init__()
+
+        self.image = pygame.Surface((width, height))
+        self.image.fill(BLUE)
+
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+    
+
 def collided(worm: Worm, bullet: Bullet) -> bool: 
     """ Check whether worm and bullet collide.
     Returns False when bullet was shooted by worm 
@@ -167,14 +205,18 @@ def collided(worm: Worm, bullet: Bullet) -> bool:
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])  
 clock = pygame.time.Clock()
 
-worm = Worm(150, SCREEN_HEIGHT - 100, "madzia_small.png", name="artur")
-worm2 = Worm(SCREEN_WIDTH - 150, SCREEN_HEIGHT - 100, "ania_small.png", name="dent")
+worm = Worm(150, SCREEN_HEIGHT - 150, "madzia_small.png", name="artur")
+worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, "ania_small.png", name="dent")
 worm_list = pygame.sprite.Group()
 worm_list.add([worm, worm2])
 
 bullet_list = pygame.sprite.Group()
-bullet = Bullet(0, 150, direction="right", v=10, alpha=PI/4)
+bullet = Bullet(0, 100, direction="right", v=10, alpha=PI/4)
 bullet_list.add(bullet)
+
+wall_list = pygame.sprite.Group()
+wall = Wall(0, SCREEN_HEIGHT-10, SCREEN_WIDTH, 10)
+wall_list.add(wall)
 
 mode = PLAYER_1
 while True:
@@ -192,13 +234,18 @@ while True:
         elif mode == PLAYER_2:
             worm2.move(event)
 
+    # Killling worms hitted by bullet
     pygame.sprite.groupcollide(worm_list, bullet_list, dokilla=True, dokillb=True, collided=collided)
-    bullet_list.update()
-    worm_list.update()
 
+    # Updating bullets and worms
+    bullet_list.update()
+    worm_list.update(wall_list)
+
+    # Drawing  
     screen.fill(BLACK)
     worm_list.draw(screen)
     bullet_list.draw(screen)
+    wall_list.draw(screen)
 
     clock.tick()
     pygame.display.flip()
