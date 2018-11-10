@@ -5,13 +5,14 @@ from math import cos, sin, pi as PI
 SCREEN_WIDTH, SCREEN_HEIGHT = (640, 480)
 TIME_UNIT = 0.05
 SHOOTING_POWER_UNIT = 0.05
-GRAV = 1
+GRAV = 2
 GRAV_WORM = 2
 JUMP_POWER = 15
 WORM_SPEED = 1
 
 BULLET_PATH = "RainbowBall.png"
-WORM_PATH = "madzia_small.png"
+WORM_PATH_RIGHT = "madzia_small_right.png"
+WORM_PATH_LEFT = "madzia_small_left.png"
 
 PLAYER_1, PLAYER_2 = 1, 2
 
@@ -22,11 +23,16 @@ class Worm(pygame.sprite.Sprite):
     """Basic object in a game which can move left and right,
     jump and shoot Bullet objects"""
 
-    def __init__(self, x=0, y=0, image_path=WORM_PATH, name="rick"):
+    def __init__(self, x=0, y=0, right_image_path=WORM_PATH_RIGHT, left_image_path=WORM_PATH_LEFT, name="rick"):
         super().__init__()
 
         self.name = name
-        self.image = pygame.image.load(image_path)
+
+        # Images of worms facing left and right
+        self.left_image = pygame.image.load(left_image_path)
+        self.right_image = pygame.image.load(right_image_path)
+
+        self.image = self.right_image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -51,6 +57,22 @@ class Worm(pygame.sprite.Sprite):
         global bullet_list
         bullet_list.add(bullet)
 
+    def set_direction(self, direction):
+        """Sets direction and image after moving left/right"""
+        self.direction = direction
+
+        x, y = self.rect.x, self.rect.y
+
+        if direction == "left":
+            self.image = self.left_image
+            self.rect = self.image.get_rect()
+            self.rect.x, self.rect.y = x, y
+
+        elif direction == "right":
+            self.image = self.right_image
+            self.rect = self.image.get_rect()
+            self.rect.x, self.rect.y = x, y
+
     def move(self, event):
         """Checks where to move and whether user is shooting"""
     
@@ -58,10 +80,10 @@ class Worm(pygame.sprite.Sprite):
             # Moving
             if event.key == pygame.K_LEFT:
                 self.change_x = -WORM_SPEED
-                self.direction = "left"
+                self.set_direction("left")
             elif event.key == pygame.K_RIGHT:
                 self.change_x = WORM_SPEED
-                self.direction = "right"
+                self.set_direction("right")
 
             # Jumping
             elif event.key == pygame.K_SPACE:
@@ -205,8 +227,8 @@ def collided(worm: Worm, bullet: Bullet) -> bool:
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])  
 clock = pygame.time.Clock()
 
-worm = Worm(150, SCREEN_HEIGHT - 150, "madzia_small.png", name="artur")
-worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, "ania_small.png", name="dent")
+worm = Worm(150, SCREEN_HEIGHT - 150, "madzia_small_right.png", "madzia_small_left.png", name="artur")
+worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, "ania_small_right.png", "ania_small_left.png", name="dent")
 worm_list = pygame.sprite.Group()
 worm_list.add([worm, worm2])
 
