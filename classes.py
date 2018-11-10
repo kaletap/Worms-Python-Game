@@ -1,6 +1,5 @@
-import pygame, sys, random, os
+import pygame
 from math import cos, sin, pi as PI
-import defaults
 from defaults import *
 
 class Worm(pygame.sprite.Sprite):
@@ -166,7 +165,7 @@ class Bullet(pygame.sprite.Sprite):
         # t: time
         self.t = 0
 
-    def update(self):
+    def update(self, walls:pygame.sprite.Group=None):
         # Updating time
         self.t += TIME_UNIT
 
@@ -195,89 +194,3 @@ class Wall(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-
-def collided(worm: Worm, bullet: Bullet) -> bool: 
-    """ Check whether worm and bullet collide.
-    Returns False when bullet was shooted by worm 
-    (we doesn't let worm shoot himself)"""
-    if worm.name == bullet.shooted_by:
-        return False
-    else:
-        coll = pygame.sprite.collide_rect(worm, bullet)
-        # Make a sound if collided
-        if coll:
-            sound_path = os.path.join('sounds/hits', random.choice(defaults.hit_sound_paths))
-            hit_sound = pygame.mixer.Sound(sound_path)
-            hit_sound.play()
-        return coll
-
-
-screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])  
-clock = pygame.time.Clock()
-
-# Sounds
-pygame.mixer.init()
-
-worm = Worm(150, SCREEN_HEIGHT - 150, "madzia_small_right.png", "madzia_small_left.png", name="artur")
-worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, "ania_small_right.png", "ania_small_left.png", name="dent")
-worm_list = pygame.sprite.Group()
-worm_list.add([worm, worm2])
-
-bullet_list = pygame.sprite.Group()
-bullet = Bullet(0, 100, direction="right", v=10, alpha=PI/4)
-bullet_list.add(bullet)
-
-wall_list = pygame.sprite.Group()
-floor = Wall(0, SCREEN_HEIGHT-10, SCREEN_WIDTH, 10)
-random.seed(42)
-block1 = Wall(40, 150, 50, 60)
-block2 = Wall(200, 50, 50, 30)
-block3 = Wall(400, 300, 50, 30)
-blocks = [Wall(random.randint(0, SCREEN_WIDTH), 
-               random.randint(0, SCREEN_HEIGHT),
-               50, 
-               10) 
-          for _ in range(10)]
-wall_list.add(floor, block1, block2, block3, *blocks)
-
-mode = PLAYER_1
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
-        # TAB to change players 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
-            print("Changing players")
-            mode = PLAYER_2 if mode == PLAYER_1 else PLAYER_1
-
-        if mode == PLAYER_1:
-            worm.move(event)
-
-        elif mode == PLAYER_2:
-            worm2.move(event)
-
-    # Killling worms hitted by bullet
-    pygame.sprite.groupcollide(worm_list, bullet_list, dokilla=True, dokillb=True, collided=collided)
-
-    # Deleting bullets which hitted wall
-    pygame.sprite.groupcollide(bullet_list, wall_list, dokilla=True, dokillb=False)
-
-    # Updating bullets and worms
-    bullet_list.update()
-    worm_list.update(wall_list)
-
-    # Drawing  
-    screen.fill(BLACK)
-    worm_list.draw(screen)
-    bullet_list.draw(screen)
-    wall_list.draw(screen)
-
-    clock.tick()
-    pygame.display.flip()
-
-
-
-
-    
-
-    
