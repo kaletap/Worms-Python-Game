@@ -1,4 +1,4 @@
-import pygame, sys, random, os
+import pygame, sys, random, os, time
 from math import cos, sin, pi as PI
 import defaults
 from defaults import *
@@ -38,6 +38,7 @@ class Worm(pygame.sprite.Sprite):
                         v=self.shooting_power, 
                         alpha=PI/4,
                         shooted_by = self.name)
+        # TODO: Change this ;__:
         global bullet_list
         bullet_list.add(bullet)
 
@@ -196,6 +197,26 @@ class Wall(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+
+class Player:
+    """Basic functionalities of a player: storing and changing worms, moving active one"""
+    def __init__(self, *worms, name="Player"):
+        """Accepts worms as arguments and name as a keyword argument"""
+        self.worms = list(worms)
+        self.name = name
+        self.worms_number = len(self.worms)
+        self.current_worm = 0
+
+    def move(self, event:pygame.event.EventType):
+        """Moves current worm"""
+        self.worms[self.current_worm].move(event)
+
+    def change_worm(self):
+        """Changes worm to next one"""
+        new_worm_num = self.current_worm + 1
+        self.current_worm = new_worm_num if new_worm_num < self.worms_number else 0
+
+
 def collided(worm: Worm, bullet: Bullet) -> bool: 
     """ Check whether worm and bullet collide.
     Returns False when bullet was shooted by worm 
@@ -212,68 +233,91 @@ def collided(worm: Worm, bullet: Bullet) -> bool:
         return coll
 
 
-screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])  
-clock = pygame.time.Clock()
+bullet_list = object()
+def main():
+    screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])  
+    clock = pygame.time.Clock()
 
-# Sounds
-pygame.mixer.init()
+    # Sounds
+    pygame.mixer.init()
 
-worm = Worm(150, SCREEN_HEIGHT - 150, "madzia_small_right.png", "madzia_small_left.png", name="artur")
-worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, "ania_small_right.png", "ania_small_left.png", name="dent")
-worm_list = pygame.sprite.Group()
-worm_list.add([worm, worm2])
+    # Creating worms
+    worm = Worm(150, SCREEN_HEIGHT - 150, "madzia_small_right.png", "madzia_small_left.png", name="artur")
+    worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, "ania_small_right.png", "ania_small_left.png", name="dent")
+    # Group containing all worms
+    worm_list = pygame.sprite.Group()
+    worm_list.add(worm, worm2)
 
-bullet_list = pygame.sprite.Group()
-bullet = Bullet(0, 100, direction="right", v=10, alpha=PI/4)
-bullet_list.add(bullet)
+    # Creating players
+    player1 = Player(worm, name="Przemek")
+    player2 = Player(worm2, name="Madzia")
 
-wall_list = pygame.sprite.Group()
-floor = Wall(0, SCREEN_HEIGHT-10, SCREEN_WIDTH, 10)
-random.seed(42)
-block1 = Wall(40, 150, 50, 60)
-block2 = Wall(200, 50, 50, 30)
-block3 = Wall(400, 300, 50, 30)
-blocks = [Wall(random.randint(0, SCREEN_WIDTH), 
-               random.randint(0, SCREEN_HEIGHT),
-               50, 
-               10) 
-          for _ in range(10)]
-wall_list.add(floor, block1, block2, block3, *blocks)
+    # Creating bullet
+    global bullet_list
+    bullet_list = pygame.sprite.Group()
+    bullet = Bullet(0, 100, direction="right", v=10, alpha=PI/4)
+    bullet_list.add(bullet)
 
-mode = PLAYER_1
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
-        # TAB to change players 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
-            print("Changing players")
-            mode = PLAYER_2 if mode == PLAYER_1 else PLAYER_1
+    # Creating walls
+    wall_list = pygame.sprite.Group()
+    floor = Wall(0, SCREEN_HEIGHT-10, SCREEN_WIDTH, 10)
+    random.seed(42)
+    block1 = Wall(40, 150, 50, 60)
+    block2 = Wall(200, 50, 50, 30)
+    block3 = Wall(400, 300, 50, 30)
+    blocks = [Wall(random.randint(0, SCREEN_WIDTH), 
+                random.randint(0, SCREEN_HEIGHT),
+                50, 
+                10) 
+            for _ in range(10)]
+    wall_list.add(floor, block1, block2, block3, *blocks)
 
-        if mode == PLAYER_1:
-            worm.move(event)
+    #print(id(player1.worms[0]) == id(worm) == id())
 
-        elif mode == PLAYER_2:
-            worm2.move(event)
+    mode = PLAYER_1
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            # Backspace to change players 
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
+                print("Changing players")
+                mode = PLAYER_2 if mode == PLAYER_1 else PLAYER_1
 
-    # Killling worms hitted by bullet
-    pygame.sprite.groupcollide(worm_list, bullet_list, dokilla=True, dokillb=True, collided=collided)
+            if mode == PLAYER_1:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
+                    player1.change_worm()
+                player1.move(event)
 
-    # Deleting bullets which hitted wall
-    pygame.sprite.groupcollide(bullet_list, wall_list, dokilla=True, dokillb=False)
+            elif mode == PLAYER_2:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
+                    player2.change_worm()
+                player2.move(event)
+                #worm2.move(event)
+                print("1:", player1.current_worm)
 
-    # Updating bullets and worms
-    bullet_list.update()
-    worm_list.update(wall_list)
+        # Killling worms hitted by bullet
+        pygame.sprite.groupcollide(worm_list, bullet_list, dokilla=True, dokillb=True, collided=collided)
 
-    # Drawing  
-    screen.fill(BLACK)
-    worm_list.draw(screen)
-    bullet_list.draw(screen)
-    wall_list.draw(screen)
+        # Deleting bullets which hitted wall
+        pygame.sprite.groupcollide(bullet_list, wall_list, dokilla=True, dokillb=False)
 
-    clock.tick()
-    pygame.display.flip()
+        # Updating bullets and worms
+        bullet_list.update()
+        worm_list.update(wall_list)
+
+        # Drawing  
+        screen.fill(BLACK)
+        worm_list.draw(screen)
+        bullet_list.draw(screen)
+        wall_list.draw(screen)
+
+        clock.tick()
+
+        pygame.display.flip()
+
+if __name__ == "__main__":
+    main()
 
 
 
