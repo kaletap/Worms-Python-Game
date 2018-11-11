@@ -42,6 +42,12 @@ class Worm(pygame.sprite.Sprite):
         self.jumping = False
         self.shooting = False
 
+        # self.gun_sight = pygame.draw.circle(pygame.Surface(size=(15, 15)), 
+        #                                     RED, 
+        #                                     (self.rect.x+10, self.rect.y-10),
+        #                                     3
+        #                                     )
+
     def shoot(self): 
         """Creates a bullet object"""
         bullet = Bullet(self.rect.x, self.rect.y, 
@@ -49,7 +55,7 @@ class Worm(pygame.sprite.Sprite):
                         v=self.shooting_power, 
                         alpha=PI/4,
                         shooted_by = self.name)
-        # TODO: Change this ;__:
+        # TODO: Change this ;__;
         global bullet_list
         bullet_list.add(bullet)
 
@@ -224,8 +230,18 @@ class Player:
 
     def change_worm(self):
         """Changes worm to next one"""
+        # First, stop moving current worm
+        self.worms[self.current_worm].change_x = 0
         new_worm_num = self.current_worm + 1
         self.current_worm = new_worm_num if new_worm_num < self.worms_number else 0
+
+    def remove_worms(self, killed_worms):
+        """Removes killed worms from player's list"""
+        if killed_worms:
+            self.worms = [worm for worm in self.worms if all(worm != w for w in killed_worms)]
+            self.worms_number = len(self.worms)
+            # Changing worm to not use a killed one
+            self.change_worm()
 
 
 def collided(worm: Worm, bullet: Bullet) -> bool: 
@@ -262,13 +278,15 @@ def main():
     # Creating worms
     worm = Worm(150, SCREEN_HEIGHT - 150, sprite_sheet1, name="artur")
     worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, sprite_sheet2, name="dent")
+    worm3 = Worm(SCREEN_WIDTH - 300, SCREEN_HEIGHT - 150, sprite_sheet2, name="zaphod")
+    worm4 = Worm(SCREEN_WIDTH - 400, SCREEN_HEIGHT - 150, sprite_sheet1, name="beeblebrox")
     # Group containing all worms
     worm_list = pygame.sprite.Group()
-    worm_list.add(worm, worm2)
+    worm_list.add(worm, worm2, worm3, worm4)
 
     # Creating players
-    player1 = Player(worm, name="Przemek")
-    player2 = Player(worm2, name="Madzia")
+    player1 = Player(worm, worm4, name="Przemek")
+    player2 = Player(worm2, worm3, name="Madzia")
 
     # Creating bullet
     global bullet_list
@@ -313,7 +331,9 @@ def main():
                 player2.move(event)
 
         # Killling worms hitted by bullet
-        pygame.sprite.groupcollide(worm_list, bullet_list, dokilla=True, dokillb=True, collided=collided)
+        killed_worms = pygame.sprite.groupcollide(worm_list, bullet_list, dokilla=True, dokillb=True, collided=collided)
+        player1.remove_worms(killed_worms.keys())
+        player2.remove_worms(killed_worms.keys())
 
         # Deleting bullets which hitted wall
         pygame.sprite.groupcollide(bullet_list, wall_list, dokilla=True, dokillb=False)

@@ -19,6 +19,7 @@ PLAYER_1, PLAYER_2 = 1, 2
 
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
+RED = (255, 0, 0)
 
 hit_sound_paths = os.listdir("sounds/hits")
 
