@@ -5,7 +5,7 @@ from defaults import *
 
 
 class SpriteSheet:
-    "Class for managing sprite_sheet images"
+    "Simple class for managing sprite_sheet images"
     def __init__(self, image_path):
         self.sprite_sheet = pygame.image.load(image_path).convert()
 
@@ -42,11 +42,12 @@ class Worm(pygame.sprite.Sprite):
         self.jumping = False
         self.shooting = False
 
-        # self.gun_sight = pygame.draw.circle(pygame.Surface(size=(15, 15)), 
-        #                                     RED, 
-        #                                     (self.rect.x+10, self.rect.y-10),
-        #                                     3
-        #                                     )
+        self.gun_sight = pygame.draw.circle(pygame.Surface(size=(15, 15)), 
+                                            RED, 
+                                            (self.rect.x+10, self.rect.y-10),
+                                            3
+                                            )
+
 
     def shoot(self): 
         """Creates a bullet object"""
@@ -239,9 +240,16 @@ class Player:
         """Removes killed worms from player's list"""
         if killed_worms:
             self.worms = [worm for worm in self.worms if all(worm != w for w in killed_worms)]
-            self.worms_number = len(self.worms)
-            # Changing worm to not use a killed one
-            self.change_worm()
+            if len(self.worms) < self.worms_number:
+                self.worms_number = len(self.worms)
+
+                # Quiting game if player has no worms left
+                if self.worms_number == 0:
+                    print("{} won, congratulations".format(self.name))
+                    sys.exit()
+
+                # Otherwise, changing worm to not use a killed one
+                self.change_worm()
 
 
 def collided(worm: Worm, bullet: Bullet) -> bool: 
@@ -260,7 +268,6 @@ def collided(worm: Worm, bullet: Bullet) -> bool:
         return coll
 
 
-bullet_list = object() # stupid
 def main():
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])  
     clock = pygame.time.Clock()
@@ -297,7 +304,7 @@ def main():
     # Creating walls
     wall_list = pygame.sprite.Group()
     floor = Wall(0, SCREEN_HEIGHT-10, SCREEN_WIDTH, 10)
-    random.seed(42)
+    random.seed(41)
     block1 = Wall(40, 150, 50, 60)
     block2 = Wall(200, 50, 50, 30)
     block3 = Wall(400, 300, 50, 30)
@@ -308,7 +315,7 @@ def main():
             for _ in range(10)]
     wall_list.add(floor, block1, block2, block3, *blocks)
 
-    #print(id(player1.worms[0]) == id(worm) == id())
+    #print(id(player1.worms[0]) == id(worm))
 
     mode = PLAYER_1
     while True:
