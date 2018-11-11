@@ -3,20 +3,31 @@ from math import cos, sin, pi as PI
 import defaults
 from defaults import *
 
+
+class SpriteSheet:
+    "Class for managing sprite_sheet images"
+    def __init__(self, image_path):
+        self.sprite_sheet = pygame.image.load(image_path).convert()
+
+    def get_image(self, x, y, width, height):
+        image = pygame.Surface((width, height))
+
+        image.blit(self.sprite_sheet, (0,0), area=(x, y, width, height))
+
+        return image
+
+
 class Worm(pygame.sprite.Sprite):
     """Basic object in a game which can move left and right, 
     jump and shoot Bullet objects"""
 
-    def __init__(self, x=0, y=0, right_image_path=WORM_PATH_RIGHT, left_image_path=WORM_PATH_LEFT, name="rick"):
+    def __init__(self, x, y, sprite_sheet:SpriteSheet, name="rick"):
         super().__init__()
 
         self.name = name
 
-        # Images of worms facing left and right
-        self.left_image = pygame.image.load(left_image_path)
-        self.right_image = pygame.image.load(right_image_path)
-
-        self.image = self.right_image
+        self.sprite_sheet = sprite_sheet
+        self.image = self.sprite_sheet.get_image(0, 0, 17, 16)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -49,12 +60,12 @@ class Worm(pygame.sprite.Sprite):
         x, y = self.rect.x, self.rect.y
 
         if direction == "left":
-            self.image = self.left_image
+            self.image = self.sprite_sheet.get_image(48, 0, 17, 16)
             self.rect = self.image.get_rect()
             self.rect.x, self.rect.y = x, y
 
         elif direction == "right":
-            self.image = self.right_image
+            self.image = self.sprite_sheet.get_image(16, 0, 17, 16)
             self.rect = self.image.get_rect()
             self.rect.x, self.rect.y = x, y
 
@@ -233,7 +244,7 @@ def collided(worm: Worm, bullet: Bullet) -> bool:
         return coll
 
 
-bullet_list = object()
+bullet_list = object() # stupid
 def main():
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])  
     clock = pygame.time.Clock()
@@ -241,9 +252,16 @@ def main():
     # Sounds
     pygame.mixer.init()
 
+    # Creating sprite_sheet object (image containing all needed images)
+    sprite_sheet_path1 = "F_01.png"
+    sprite_sheet1 = SpriteSheet(sprite_sheet_path1)
+
+    sprite_sheet_path2 = "M_09.png"
+    sprite_sheet2 = SpriteSheet(sprite_sheet_path2)
+
     # Creating worms
-    worm = Worm(150, SCREEN_HEIGHT - 150, "madzia_small_right.png", "madzia_small_left.png", name="artur")
-    worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, "ania_small_right.png", "ania_small_left.png", name="dent")
+    worm = Worm(150, SCREEN_HEIGHT - 150, sprite_sheet1, name="artur")
+    worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, sprite_sheet2, name="dent")
     # Group containing all worms
     worm_list = pygame.sprite.Group()
     worm_list.add(worm, worm2)
@@ -293,8 +311,6 @@ def main():
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
                     player2.change_worm()
                 player2.move(event)
-                #worm2.move(event)
-                print("1:", player1.current_worm)
 
         # Killling worms hitted by bullet
         pygame.sprite.groupcollide(worm_list, bullet_list, dokilla=True, dokillb=True, collided=collided)
@@ -312,7 +328,7 @@ def main():
         bullet_list.draw(screen)
         wall_list.draw(screen)
 
-        clock.tick()
+        clock.tick(2000)
 
         pygame.display.flip()
 
