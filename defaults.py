@@ -9,11 +9,9 @@ GRAV_WORM = 2
 JUMP_POWER = 15
 WORM_SPEED = 1
 
-GUN_SIGTH_RADIUS = 10
+GUNPOINT_RADIUS = 5
 
 BULLET_PATH = "RainbowBall.png"
-WORM_PATH_RIGHT = "madzia_small_right.png"
-WORM_PATH_LEFT = "madzia_small_left.png"
 
 PLAYER_1, PLAYER_2 = 1, 2
 

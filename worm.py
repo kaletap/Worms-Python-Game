@@ -17,6 +17,15 @@ class SpriteSheet:
         return image
 
 
+class GunPoint:
+    "Represents a red dot which helps in shooting"
+    def __init__(self, x, y, color=RED, radius=GUNPOINT_RADIUS):
+        self.x = x
+        self.y = y
+        self.color = RED
+        self.radius = radius
+
+
 class Worm(pygame.sprite.Sprite):
     """Basic object in a game which can move left and right, 
     jump and shoot Bullet objects"""
@@ -41,13 +50,6 @@ class Worm(pygame.sprite.Sprite):
         self.direction = "right"
         self.jumping = False
         self.shooting = False
-
-        self.gun_sight = pygame.draw.circle(pygame.Surface(size=(15, 15)), 
-                                            RED, 
-                                            (self.rect.x+10, self.rect.y-10),
-                                            3
-                                            )
-
 
     def shoot(self): 
         """Creates a bullet object"""
@@ -110,7 +112,7 @@ class Worm(pygame.sprite.Sprite):
                 self.shooting = False
                 self.shoot()
 
-    def update(self, walls:pygame.sprite.Group = None):
+    def update(self, walls:pygame.sprite.Group = None, gunpoint:GunPoint = None, current_worm=None):
         y_old = self.rect.y
 
         # Update position in y_direction
@@ -120,7 +122,7 @@ class Worm(pygame.sprite.Sprite):
             self.rect.y = y_new
 
         else:
-            self.rect.y += WORM_SPEED
+            self.rect.y += 1
 
         # Check if worm is not colliding with wall after moving up/down
         if walls:
@@ -152,6 +154,13 @@ class Worm(pygame.sprite.Sprite):
         # Shooting power:
         if self.shooting:
             self.shooting_power += SHOOTING_POWER_UNIT
+
+        # Update gunpoints coordinates if we are updating active worm
+        if self is current_worm:
+            gun_x = self.rect.x + 16 + 10 if self.direction == "right" \
+                    else self.rect.x - 10
+            gunpoint.x = gun_x
+            gunpoint.y = self.rect.y - 10
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -218,34 +227,52 @@ class Wall(pygame.sprite.Sprite):
 
 class Player:
     """Basic functionalities of a player: storing and changing worms, moving active one"""
+
     def __init__(self, *worms, name="Player"):
         """Accepts worms as arguments and name as a keyword argument"""
         self.worms = list(worms)
         self.name = name
         self.worms_number = len(self.worms)
-        self.current_worm = 0
+        self.current_worm_id = 0
+        
+    @property
+    def current_worm(self):
+        # TODO: hacky, to be changed 
+        # (self.current_worm_id might be >= self.worms_number if this function is called in remove_worms
+        # after player killed his own worm, which was previous in the list than the current_worm)
+        return self.worms[self.current_worm_id] if self.current_worm_id < self.worms_number \
+                                                else self.worms[0]
+    
+    @current_worm.setter
+    def current_worm(self, new_worm:Worm):
+        self.__current_worm = new_worm
 
-    def move(self, event:pygame.event.EventType):
+
+    def move(self, event):
         """Moves current worm"""
-        self.worms[self.current_worm].move(event)
-
+        self.current_worm.move(event)
+        
     def change_worm(self):
         """Changes worm to next one"""
-        # First, stop moving current worm
-        self.worms[self.current_worm].change_x = 0
-        new_worm_num = self.current_worm + 1
-        self.current_worm = new_worm_num if new_worm_num < self.worms_number else 0
+        # First, stop moving current worm (problematic if called after player killed his own worm)
+        #print("change worm")
+        #print(self.current_worm_id, self.worms_number, len(self.worms))
+        self.current_worm.change_x = 0
+        new_worm_id = self.current_worm_id + 1
+        self.current_worm_id = new_worm_id if new_worm_id < self.worms_number else 0
 
     def remove_worms(self, killed_worms):
         """Removes killed worms from player's list"""
         if killed_worms:
             self.worms = [worm for worm in self.worms if all(worm != w for w in killed_worms)]
+            for worm in self.worms:
+                worm.change_x = 0
             if len(self.worms) < self.worms_number:
                 self.worms_number = len(self.worms)
 
                 # Quiting game if player has no worms left
                 if self.worms_number == 0:
-                    print("{} won, congratulations".format(self.name))
+                    print("{} lost".format(self.name))
                     sys.exit()
 
                 # Otherwise, changing worm to not use a killed one
@@ -276,17 +303,17 @@ def main():
     pygame.mixer.init()
 
     # Creating sprite_sheet object (image containing all needed images)
-    sprite_sheet_path1 = "F_01.png"
+    sprite_sheet_path1 = "M_09.png"
     sprite_sheet1 = SpriteSheet(sprite_sheet_path1)
 
-    sprite_sheet_path2 = "M_09.png"
+    sprite_sheet_path2 = "F_01.png"
     sprite_sheet2 = SpriteSheet(sprite_sheet_path2)
 
     # Creating worms
     worm = Worm(150, SCREEN_HEIGHT - 150, sprite_sheet1, name="artur")
     worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, sprite_sheet2, name="dent")
-    worm3 = Worm(SCREEN_WIDTH - 300, SCREEN_HEIGHT - 150, sprite_sheet2, name="zaphod")
-    worm4 = Worm(SCREEN_WIDTH - 400, SCREEN_HEIGHT - 150, sprite_sheet1, name="beeblebrox")
+    worm3 = Worm(SCREEN_WIDTH - 300, SCREEN_HEIGHT - 150, sprite_sheet2, name="ford")
+    worm4 = Worm(SCREEN_WIDTH - 400, SCREEN_HEIGHT - 150, sprite_sheet1, name="prefect")
     # Group containing all worms
     worm_list = pygame.sprite.Group()
     worm_list.add(worm, worm2, worm3, worm4)
@@ -300,6 +327,9 @@ def main():
     bullet_list = pygame.sprite.Group()
     bullet = Bullet(0, 100, direction="right", v=10, alpha=PI/4)
     bullet_list.add(bullet)
+
+    ## Creating gunpoint object:
+    gunpoint = GunPoint(player1.current_worm.rect.x+16+10, player1.current_worm.rect.y-10)
 
     # Creating walls
     wall_list = pygame.sprite.Group()
@@ -319,6 +349,9 @@ def main():
 
     mode = PLAYER_1
     while True:
+        # Filling screen with black 
+        screen.fill(BLACK)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -347,17 +380,21 @@ def main():
 
         # Updating bullets and worms
         bullet_list.update()
-        worm_list.update(wall_list)
+        current_worm = player1.current_worm if mode==PLAYER_1 else player2.current_worm
+        worm_list.update(wall_list, gunpoint, current_worm)
 
-        # Drawing  
-        screen.fill(BLACK)
+        # Drawing 
+        # Gunpoint:
+        pygame.draw.circle(screen, gunpoint.color, (gunpoint.x, gunpoint.y), gunpoint.radius)
         worm_list.draw(screen)
         bullet_list.draw(screen)
         wall_list.draw(screen)
 
-        clock.tick(2000)
+        clock.tick(1000)
 
         pygame.display.flip()
+
+    pygame.quit()
 
 if __name__ == "__main__":
     main()
