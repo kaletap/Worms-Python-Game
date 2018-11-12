@@ -1,4 +1,4 @@
-import pygame, sys, random, os, time
+import pygame, sys, random, os, time, string
 from math import cos, sin, pi as PI
 import defaults
 from defaults import *
@@ -19,7 +19,7 @@ class SpriteSheet:
 
 class GunPoint:
     "Represents a red dot which helps in shooting"
-    def __init__(self, x, y, color=RED, radius=GUNPOINT_RADIUS):
+    def __init__(self, x, y, color=RED, radius=GUNPOINT_CIRCLE_RADIUS):
         self.x = x
         self.y = y
         self.color = RED
@@ -30,10 +30,10 @@ class Worm(pygame.sprite.Sprite):
     """Basic object in a game which can move left and right, 
     jump and shoot Bullet objects"""
 
-    def __init__(self, x, y, sprite_sheet:SpriteSheet, name="rick"):
+    def __init__(self, x, y, sprite_sheet:SpriteSheet, name=None):
         super().__init__()
 
-        self.name = name
+        self.name = name or ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
         self.sprite_sheet = sprite_sheet
         self.image = self.sprite_sheet.get_image(0, 0, 17, 16)
@@ -48,15 +48,29 @@ class Worm(pygame.sprite.Sprite):
         self.change_y = 0
 
         self.direction = "right"
+        self.change_angle = 0
+        self.shooting_angle = PI/4
         self.jumping = False
         self.shooting = False
 
+    def get_gunpoint_coordinates(self):
+        if self.direction == "right":
+            gunpoint_x = self.rect.x + 16 + int(GUNPOINT_RADIUS * cos(self.shooting_angle))
+
+        else: # self.diretion == "left"
+            gunpoint_x = self.rect.x - int(GUNPOINT_RADIUS * cos(self.shooting_angle))
+            
+        gunpoint_y = self.rect.y - int(GUNPOINT_RADIUS * sin(self.shooting_angle))
+
+        return gunpoint_x, gunpoint_y
+
     def shoot(self): 
         """Creates a bullet object"""
-        bullet = Bullet(self.rect.x, self.rect.y, 
+        x, y = self.get_gunpoint_coordinates()
+        bullet = Bullet(x if self.direction=="right" else x-8, y, 
                         direction=self.direction, 
                         v=self.shooting_power, 
-                        alpha=PI/4,
+                        alpha=self.shooting_angle,
                         shooted_by = self.name)
         # TODO: Change this ;__;
         global bullet_list
@@ -98,19 +112,37 @@ class Worm(pygame.sprite.Sprite):
                     self.y_0 = self.rect.y
                     self.t = 0
 
+            # Aiming
+            elif event.key == pygame.K_UP:
+                self.change_angle = SHOOTING_ANGLE_CHANGE
+
+            elif event.key == pygame.K_DOWN:
+                self.change_angle = -SHOOTING_ANGLE_CHANGE
+
             # Shooting
             elif event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
                 self.shooting = True
                 self.shooting_power = 0
             
         if event.type == pygame.KEYUP:
+            # Moving
             if event.key == pygame.K_LEFT:
                 self.change_x = self.change_x + WORM_SPEED if self.change_x < WORM_SPEED else WORM_SPEED
+
             elif event.key == pygame.K_RIGHT:
                 self.change_x = self.change_x - WORM_SPEED if self.change_x > -WORM_SPEED else -WORM_SPEED
+
+            # Aiming
+            elif event.key == pygame.K_UP:
+                self.change_angle = self.change_angle - SHOOTING_ANGLE_CHANGE
+
+            elif event.key == pygame.K_DOWN:
+                self.change_angle = self.change_angle + SHOOTING_ANGLE_CHANGE
+
+            # Shooting
             elif event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
                 self.shooting = False
-                self.shoot()
+                self.shoot() 
 
     def update(self, walls:pygame.sprite.Group = None, gunpoint:GunPoint = None, current_worm=None):
         y_old = self.rect.y
@@ -155,12 +187,13 @@ class Worm(pygame.sprite.Sprite):
         if self.shooting:
             self.shooting_power += SHOOTING_POWER_UNIT
 
+        # Updating aiming
+        self.shooting_angle += self.change_angle
+
         # Update gunpoints coordinates if we are updating active worm
         if self is current_worm:
-            gun_x = self.rect.x + 16 + 10 if self.direction == "right" \
-                    else self.rect.x - 10
-            gunpoint.x = gun_x
-            gunpoint.y = self.rect.y - 10
+            #print(GUNPOINT_RADIUS * cos(self.shooting_angle), GUNPOINT_RADIUS * sin(self.shooting_angle))
+            gunpoint.x, gunpoint.y = self.get_gunpoint_coordinates()
 
 
 class Bullet(pygame.sprite.Sprite):
