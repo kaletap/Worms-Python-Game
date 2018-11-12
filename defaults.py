@@ -2,6 +2,9 @@ import pygame, os
 from math import pi as PI
 
 SCREEN_WIDTH, SCREEN_HEIGHT = (640, 480)
+MENU_WIDTH, MENU_HEIGHT = (480, 480)
+
+FRAME_RATE = 10000
 
 TIME_UNIT = 0.05
 SHOOTING_POWER_UNIT = 0.05
@@ -11,6 +14,9 @@ GRAV_WORM = 2
 JUMP_POWER = 15
 WORM_SPEED = 1
 
+PL, EN = "PL", "ENG"
+ON, OF = "ON", "OFF"
+
 GUNPOINT_RADIUS = 10
 GUNPOINT_CIRCLE_RADIUS = 2
 
@@ -18,9 +24,11 @@ BULLET_PATH = "RainbowBall.png"
 
 PLAYER_1, PLAYER_2 = 1, 2
 
+WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 
 hit_sound_paths = os.listdir("sounds/hits")
 

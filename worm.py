@@ -1,3 +1,4 @@
+#!opt/anaconda/bin/python
 import pygame, sys, random, os, time, string
 from math import cos, sin, pi as PI
 import defaults
@@ -10,6 +11,7 @@ class SpriteSheet:
         self.sprite_sheet = pygame.image.load(image_path).convert()
 
     def get_image(self, x, y, width, height):
+        """Gets image from sprite sheet starting in (x,y)"""
         image = pygame.Surface((width, height))
 
         image.blit(self.sprite_sheet, (0,0), area=(x, y, width, height))
@@ -40,9 +42,6 @@ class Worm(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-
-        self.width = self.rect.width
-        self.height = self.rect.height
         
         self.change_x = 0
         self.change_y = 0
@@ -67,6 +66,7 @@ class Worm(pygame.sprite.Sprite):
     def shoot(self): 
         """Creates a bullet object"""
         x, y = self.get_gunpoint_coordinates()
+        # If worm is facing left we shoot a bullet from a point more on the left
         bullet = Bullet(x if self.direction=="right" else x-8, y, 
                         direction=self.direction, 
                         v=self.shooting_power, 
@@ -280,7 +280,6 @@ class Player:
     def current_worm(self, new_worm:Worm):
         self.__current_worm = new_worm
 
-
     def move(self, event):
         """Moves current worm"""
         self.current_worm.move(event)
@@ -328,8 +327,67 @@ def collided(worm: Worm, bullet: Bullet) -> bool:
         return coll
 
 
+class TextObject:
+    """Simple class to represent a text object displaying in Menu"""
+    def __init__(self, text: str, x: int, y: int, font_size:int=25, 
+                bold:bool=False, 
+                font=None):
+        self.text = text
+        self.x = x
+        self.y = y
+        # We don't want to open this SysFont to many times
+        self.font = font or pygame.font.SysFont('Calibri', font_size, bold, False)
+        #font = pygame.font.SysFont('Calibri', 25, True, False)
+        self.image = self.font.render(text, True, GREEN)
+
+
+class Menu:
+    """Class responsible for the look of the Menu on the right"""
+    def __init__(self, x=SCREEN_WIDTH + 20, y=20):
+        self.x = x
+        self.y = y
+        self.texts = [TextObject("Menu", x, y, 25, bold=True)]
+        self.language = EN 
+        self.sound = ON
+        self.time = 10
+
+        self.font = pygame.font.SysFont('Calibri', 25, False, False)
+
+        # TODO: Get rid of code repetition?
+        # Creating language options
+        y_lang = y + 1*20
+        lang = TextObject("Language:", x, y_lang)
+        lang_rect = lang.image.get_rect()
+        lang_option = TextObject(self.language, x + lang_rect.width + 20, y_lang)
+        self.add_text_objects(lang, lang_option)
+        
+        # Creating sound options
+        y_sound = y + 2*20
+        snd = TextObject("Sound:", x, y_sound)
+        snd_rect = snd.image.get_rect()
+        snd_option = TextObject(self.sound, x + snd_rect.width + 20, y_sound)
+        self.add_text_objects(snd, snd_option)
+
+    def add_raw_texts(self, *texts):
+        for text in texts:
+            self.texts.append(TextObject(text, self.x, self.y + 30*len(self.texts)))
+
+    def add_text_objects(self, *text_objects):
+        for text in text_objects:
+            self.texts.append(text)
+
+    def add_time(self, *text_objects):
+        self.time_pics = list(text_objects)
+
+    def draw(self, screen):
+        for text_object in (self.texts + self.time_pics):
+            screen.blit(text_object.image, (text_object.x, text_object.y))
+
+
 def main():
-    screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])  
+    pygame.init()
+    screen = pygame.display.set_mode([SCREEN_WIDTH + MENU_WIDTH, SCREEN_HEIGHT]) 
+    pygame.display.set_caption("Worms") 
     clock = pygame.time.Clock()
 
     # Sounds
@@ -367,6 +425,7 @@ def main():
     # Creating walls
     wall_list = pygame.sprite.Group()
     floor = Wall(0, SCREEN_HEIGHT-10, SCREEN_WIDTH, 10)
+    right_block = Wall(SCREEN_WIDTH-10, 0, 10, SCREEN_HEIGHT)
     random.seed(41)
     block1 = Wall(40, 150, 50, 60)
     block2 = Wall(200, 50, 50, 30)
@@ -376,14 +435,34 @@ def main():
                 50, 
                 10) 
             for _ in range(10)]
-    wall_list.add(floor, block1, block2, block3, *blocks)
+    wall_list.add(floor, right_block, block1, block2, block3, *blocks)
 
     #print(id(player1.worms[0]) == id(worm))
 
+    # Creating Menu
+    menu = Menu()
+
+    # Creating font for displaying time
+    font_bold = pygame.font.SysFont('Calibri', 25, True, False)
+    font_not_bold = pygame.font.SysFont('Calibri', 25, True, False)
+
+    frame_count = 0
     mode = PLAYER_1
     while True:
         # Filling screen with black 
         screen.fill(BLACK)
+
+        # Calculating how much time is left
+        print(frame_count)
+        total_seconds = frame_count // FRAME_RATE
+        print(total_seconds)
+        menu.time = total_seconds
+        x, y = SCREEN_WIDTH + 20, 20
+        y_time = y + 3*20
+        tim = TextObject("Time:", x, y_time, font=font_bold)
+        tim_rect = tim.image.get_rect()
+        tim_display = TextObject(str(total_seconds), x + tim_rect.width + 20, y_time, font=font_not_bold)
+        menu.add_time(tim, tim_display)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -417,13 +496,15 @@ def main():
         worm_list.update(wall_list, gunpoint, current_worm)
 
         # Drawing 
-        # Gunpoint:
         pygame.draw.circle(screen, gunpoint.color, (gunpoint.x, gunpoint.y), gunpoint.radius)
         worm_list.draw(screen)
         bullet_list.draw(screen)
         wall_list.draw(screen)
+        menu.draw(screen)
 
-        clock.tick(1000)
+        frame_count += 1
+
+        clock.tick(FRAME_RATE)
 
         pygame.display.flip()
 
