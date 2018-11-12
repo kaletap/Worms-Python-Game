@@ -327,63 +327,91 @@ def collided(worm: Worm, bullet: Bullet) -> bool:
         return coll
 
 
-class TextObject:
+class TextObject(pygame.sprite.Sprite):
     """Simple class to represent a text object displaying in Menu"""
-    def __init__(self, text: str, x: int, y: int, font_size:int=25, 
-                bold:bool=False, 
-                font=None):
+    def __init__(self, text, x, y, font=None, font_size=25, bold=False):
+        super().__init__()
+
         self.text = text
         self.x = x
         self.y = y
-        # We don't want to open this SysFont to many times
+
+        # We don't want to open this SysFont too many times
+        # it's better to pass it as an argument than create every time
         self.font = font or pygame.font.SysFont('Calibri', font_size, bold, False)
-        #font = pygame.font.SysFont('Calibri', 25, True, False)
+
         self.image = self.font.render(text, True, GREEN)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
 
 
 class Menu:
     """Class responsible for the look of the Menu on the right"""
     def __init__(self, x=SCREEN_WIDTH + 20, y=20):
+        # x and y are starting points of menu
         self.x = x
         self.y = y
-        self.texts = [TextObject("Menu", x, y, 25, bold=True)]
+
+        # Options
         self.language = EN 
         self.sound = ON
         self.time = 10
 
+        # TODO: are these fonts necessary here?
         self.font = pygame.font.SysFont('Calibri', 25, False, False)
+        self.font_bold = pygame.font.SysFont('Calibri', 25, True, False)
 
-        # TODO: Get rid of code repetition?
-        # Creating language options
-        y_lang = y + 1*20
-        lang = TextObject("Language:", x, y_lang)
-        lang_rect = lang.image.get_rect()
-        lang_option = TextObject(self.language, x + lang_rect.width + 20, y_lang)
-        self.add_text_objects(lang, lang_option)
+        self.positions = {
+            "menu": (x, y+10),
+
+            "language" : (x, y + 50),
+            "language_option" : (x + 100, y + 50),
+
+            "sound" : (x, y + 100),
+            "sound_option" : (x + 100, y + 100),
+
+            "time" : (x, SCREEN_HEIGHT - 50),
+            "time_display" : (x + 100, SCREEN_HEIGHT - 50)
+        }
+
+        self.text_objects = {
+            "menu": TextObject("MENU", *self.positions["menu"]),
+
+            "language" : TextObject("Language:", *self.positions["language"], self.font),
+            "language_option" : TextObject(self.language, *self.positions["language_option"], self.font),
+
+            "sound" : TextObject("Sound:", *self.positions["sound"], self.font),
+            "sound_option" : TextObject(self.sound, *self.positions["sound_option"], self.font),
+
+            "time" : TextObject("TIME:", *self.positions["time"], font=self.font_bold),
+            "time_display": TextObject(str(0), *self.positions["time_display"], self.font)
+        }
+
+    def update_options(self, x, y):
+        if self.text_objects["language_option"].rect.collidepoint(x, y):
+            print("Changing language option")
+            new_language_option = EN if self.language == PL else PL
+            self.language = new_language_option
+            self.text_objects["language_option"] = TextObject(new_language_option, 
+                                                              *self.positions["language_option"], 
+                                                              self.font)
+
+        elif self.text_objects["sound_option"].rect.collidepoint(x, y):
+            print("Changing sound option")
+            new_sound_option = OF if self.sound == ON else ON
+            self.sound = new_sound_option
+            self.text_objects["sound_option"] = TextObject(new_sound_option, 
+                                                          *self.positions["sound_option"],
+                                                          self.font)
+
+    def update_time(self, seconds, font):
+        self.time = seconds
+        self.text_objects["time_display"] = TextObject(str(seconds), 
+                                                        *self.positions["time_display"], 
+                                                        font=self.font)
         
-        # Creating sound options
-        y_sound = y + 2*20
-        snd = TextObject("Sound:", x, y_sound)
-        snd_rect = snd.image.get_rect()
-        snd_option = TextObject(self.sound, x + snd_rect.width + 20, y_sound)
-        self.add_text_objects(snd, snd_option)
-
-    def add_raw_texts(self, *texts):
-        for text in texts:
-            self.texts.append(TextObject(text, self.x, self.y + 30*len(self.texts)))
-
-    def add_text_objects(self, *text_objects):
-        for text in text_objects:
-            self.texts.append(text)
-
-    def add_time(self, *text_objects):
-        self.time_pics = list(text_objects)
-
-    def draw(self, screen):
-        for text_object in (self.texts + self.time_pics):
-            screen.blit(text_object.image, (text_object.x, text_object.y))
-
-
+    
 def main():
     pygame.init()
     screen = pygame.display.set_mode([SCREEN_WIDTH + MENU_WIDTH, SCREEN_HEIGHT]) 
@@ -446,23 +474,15 @@ def main():
     font_bold = pygame.font.SysFont('Calibri', 25, True, False)
     font_not_bold = pygame.font.SysFont('Calibri', 25, True, False)
 
-    frame_count = 0
+    start = time.time()
     mode = PLAYER_1
     while True:
         # Filling screen with black 
         screen.fill(BLACK)
 
         # Calculating how much time is left
-        print(frame_count)
-        total_seconds = frame_count // FRAME_RATE
-        print(total_seconds)
-        menu.time = total_seconds
-        x, y = SCREEN_WIDTH + 20, 20
-        y_time = y + 3*20
-        tim = TextObject("Time:", x, y_time, font=font_bold)
-        tim_rect = tim.image.get_rect()
-        tim_display = TextObject(str(total_seconds), x + tim_rect.width + 20, y_time, font=font_not_bold)
-        menu.add_time(tim, tim_display)
+        total_seconds = int(time.time() - start)
+        menu.update_time(total_seconds, font_not_bold)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -471,6 +491,10 @@ def main():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
                 print("Changing players")
                 mode = PLAYER_2 if mode == PLAYER_1 else PLAYER_1
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                menu.update_options(x, y)
 
             if mode == PLAYER_1:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
@@ -500,9 +524,9 @@ def main():
         worm_list.draw(screen)
         bullet_list.draw(screen)
         wall_list.draw(screen)
-        menu.draw(screen)
 
-        frame_count += 1
+        # Drawing menu and time
+        pygame.sprite.Group(menu.text_objects.values()).draw(screen)
 
         clock.tick(FRAME_RATE)
 
