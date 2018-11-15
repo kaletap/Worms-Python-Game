@@ -10,6 +10,8 @@ from defaults import *
         
     
 def main(args):
+    pygame.mixer.pre_init(44100, -16, 2, 2048)
+    pygame.mixer.init()
     pygame.init()
     if args.no_menu:
         screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
@@ -47,16 +49,18 @@ def main(args):
     wall_list = pygame.sprite.Group()
     floor = Wall(0, SCREEN_HEIGHT-10, SCREEN_WIDTH, 10)
     right_block = Wall(SCREEN_WIDTH-10, 0, 10, SCREEN_HEIGHT)
+    left_block = Wall(0, 0, 10, SCREEN_HEIGHT)
     random.seed(41)
     block1 = Wall(40, 150, 50, 60)
-    block2 = Wall(200, 50, 50, 30)
-    block3 = Wall(400, 300, 50, 30)
-    blocks = [Wall(random.randint(0, SCREEN_WIDTH), 
-                random.randint(0, SCREEN_HEIGHT),
-                50, 
-                10) 
-            for _ in range(10)]
-    wall_list.add(floor, right_block, block1, block2, block3, *blocks)
+    block2 = Wall(100, 50, 350, 30)
+    block3 = Wall(90, 350, 150, 10)
+    block4 = Wall(550, 100, 50, 30)
+    blocks = [Wall(10*i, 10*i + 40, 20, 10) for i in range(0, SCREEN_HEIGHT // 10, 3)]
+    other_blocks = [Wall(SCREEN_WIDTH // 2 + 10*i + 80, 
+                         SCREEN_HEIGHT - 30 * i - 140, 20, 10) 
+                    for i in range(0, 10, 1)]
+
+    wall_list.add(floor, right_block, left_block, block1, block2, block3, block4, *blocks, *other_blocks)
 
     # Creating bullet list
     bullet_list = pygame.sprite.Group()

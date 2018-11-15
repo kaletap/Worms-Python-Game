@@ -4,7 +4,7 @@ from defaults import *
 
 class TextObject(pygame.sprite.Sprite):
     """Simple class to represent a text object displayed in Menu"""
-    def __init__(self, text, x, y, font=None, font_size=25, bold=False):
+    def __init__(self, text, x, y, font=None, font_size=25, bold=False, color=GREEN):
         super().__init__()
 
         self.text = text
@@ -15,7 +15,7 @@ class TextObject(pygame.sprite.Sprite):
         # it's better to pass it as an argument than create each time
         self.font = font or pygame.font.SysFont('Calibri', font_size, bold, False)
 
-        self.image = self.font.render(text, True, GREEN)
+        self.image = self.font.render(text, True, color)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -42,6 +42,7 @@ class Menu:
 
         self.font = pygame.font.SysFont('Calibri', 25, False, False)
         self.font_bold = pygame.font.SysFont('Calibri', 25, True, False)
+        self.font_time = pygame.font.SysFont('Calibri', 70, True, False)
 
         self.click_sound = pygame.mixer.Sound("sounds/buttons_and_clicks/Clic07.mp3.flac")
 
@@ -55,7 +56,7 @@ class Menu:
             "sound_option" : (x + 100, y + 100),
 
             "time" : (x, SCREEN_HEIGHT - 50),
-            "time_display" : (x + 100, SCREEN_HEIGHT - 50)
+            "time_display" : (x + 100, SCREEN_HEIGHT - 70)
         }
 
         self.text_objects = {
@@ -67,8 +68,8 @@ class Menu:
             "sound" : TextObject("Sound:", *self.positions["sound"], self.font),
             "sound_option" : TextObject(self.sound, *self.positions["sound_option"], self.font),
 
-            "time" : TextObject("TIME:", *self.positions["time"], font=self.font_bold),
-            "time_display": TextObject(str(0), *self.positions["time_display"], self.font)
+            "time" : TextObject("TIME:", *self.positions["time"], font=self.font_bold)
+            #"time_display": TextObject(str(0), *self.positions["time_display"], self.font)
         }
 
     def update_options(self, x, y):
@@ -104,4 +105,5 @@ class Menu:
         self.time = seconds
         self.text_objects["time_display"] = TextObject(str(seconds), 
                                                         *self.positions["time_display"], 
-                                                        font=self.font)
+                                                        font=self.font_time,
+                                                        color=RED)
