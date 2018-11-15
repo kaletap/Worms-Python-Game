@@ -107,9 +107,11 @@ class Worm(pygame.sprite.Sprite):
             if event.key == pygame.K_LEFT:
                 self.change_x = -WORM_SPEED
                 self.set_direction("left")
+                self.pressed_left = True
             elif event.key == pygame.K_RIGHT:
                 self.change_x = WORM_SPEED
                 self.set_direction("right")
+                self.pressed_right = True
 
             # Jumping
             elif event.key == pygame.K_SPACE:
@@ -131,18 +133,20 @@ class Worm(pygame.sprite.Sprite):
                 self.shooting = True
                 self.shooting_power = 0
 
-        # If player changes worms while pressing K_LEFT or K_RIGHT worm might start moving
-        # in different direction. 
-        # It's not much of a problem because we control this worm, so we can stop him.
-        # But it can also happen during change of players: one player by pressing K_LEFT
-        # to long may cause another player to move
         if event.type == pygame.KEYUP:
             # Moving
             if event.key == pygame.K_LEFT:
-                self.change_x = self.change_x + WORM_SPEED if self.change_x < WORM_SPEED else WORM_SPEED
+                if self.pressed_left:
+                    self.change_x = self.change_x + WORM_SPEED if self.change_x < WORM_SPEED else WORM_SPEED
+                else : # if KEYUP was done without KEYDOWN first (KDOWN done by previous player)
+                    self.change_x = 0
+            
 
             elif event.key == pygame.K_RIGHT:
-                self.change_x = self.change_x - WORM_SPEED if self.change_x > -WORM_SPEED else -WORM_SPEED
+                if self.pressed_right:
+                    self.change_x = self.change_x - WORM_SPEED if self.change_x > -WORM_SPEED else -WORM_SPEED
+                else:
+                    self.change_x = 0
 
             # Aiming
             elif event.key == pygame.K_UP:
@@ -298,6 +302,8 @@ class Player:
 
     def stop_worm(self):
         self.current_worm.change_x = 0
+        self.current_worm.pressed_left = False
+        self.current_worm.pressed_right = False
         
     def change_worm(self):
         """Changes worm to next one"""
@@ -308,7 +314,7 @@ class Player:
         new_worm_id = self.current_worm_id + 1
         self.current_worm_id = new_worm_id if new_worm_id < self.worms_number else 0
 
-    def remove_worms(self, killed_worms):
+    def remove_worms(self, killed_worms) -> bool:
         """Removes killed worms from player's list"""
         if killed_worms:
             self.worms = [worm for worm in self.worms if all(worm != w for w in killed_worms)]
@@ -319,10 +325,11 @@ class Player:
 
                 # Quiting game if player has no worms left
                 if self.worms_number == 0:
-                    print("{} lost".format(self.name))
-                    sys.exit()
+                    return True
 
                 # Otherwise, changing worm to not use a killed one
                 self.change_worm()
+
+        return False
 
 

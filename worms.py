@@ -1,3 +1,4 @@
+#!/opt/anaconda/bin//python
 import pygame, sys, random, os, time, argparse
 from math import cos, sin, pi as PI
 
@@ -36,13 +37,8 @@ def main(args):
     worm_list.add(*worms_player1, *worms_player2)
 
     # Creating players
-    player1 = Player(*worms_player1, name="Player1")
-    player2 = Player(*worms_player2, name="Player2")
-
-    # Creating bullet
-    bullet_list = pygame.sprite.Group()
-    bullet = Bullet(0, 100, direction="right", v=10, alpha=PI/4)
-    bullet_list.add(bullet)
+    player1 = Player(*worms_player1, name=args.player1)
+    player2 = Player(*worms_player2, name=args.player2)
 
     ## Creating gunpoint object:
     gunpoint = GunPoint(player1.current_worm.rect.x+16+10, player1.current_worm.rect.y-10)
@@ -62,7 +58,8 @@ def main(args):
             for _ in range(10)]
     wall_list.add(floor, right_block, block1, block2, block3, *blocks)
 
-    #print(id(player1.worms[0]) == id(worm))
+    # Creating bullet list
+    bullet_list = pygame.sprite.Group()
 
     # Creating Menu
     menu = Menu()
@@ -70,9 +67,10 @@ def main(args):
     print("Welcome to worms")
 
     # Playing game
+    done, player1_lost, player2_lost = False, False, False
     start = time.time()
     mode = PLAYER_1
-    while True:
+    while not done:
         # Filling screen with black 
         screen.fill(BLACK)
 
@@ -87,16 +85,15 @@ def main(args):
             player2.stop_worm()
             changing_players_text = TextObject("Changing players", 50, 50, font=None, font_size=50)
             pygame.sprite.Group(changing_players_text).draw(screen)
-            pygame.time.delay(2000)
+            pygame.time.delay(1000)
             start = time.time()
 
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-            # Backspace to change players 
+            # Backspace to change players (useful for debugging)
             if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
-                print("Changing players")
                 mode = PLAYER_2 if mode == PLAYER_1 else PLAYER_1
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -105,11 +102,13 @@ def main(args):
 
             if mode == PLAYER_1:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
+                    player1.stop_worm()
                     player1.change_worm()
                 player1.move(event, bullet_list)
 
             elif mode == PLAYER_2:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
+                    player2.stop_worm()
                     player2.change_worm()
                 player2.move(event, bullet_list)
 
@@ -119,8 +118,9 @@ def main(args):
                                                   dokilla=True, 
                                                   dokillb=True, 
                                                   collided = lambda x, y: collided(x, y, menu.sound))
-        player1.remove_worms(killed_worms.keys())
-        player2.remove_worms(killed_worms.keys())
+        player1_lost = player1.remove_worms(killed_worms.keys()) 
+        player2_lost = player2.remove_worms(killed_worms.keys())
+        done = player1_lost or player2_lost
 
         # Deleting bullets which hitted wall
         pygame.sprite.groupcollide(bullet_list, wall_list, dokilla=True, dokillb=False)
@@ -143,6 +143,18 @@ def main(args):
 
         pygame.display.flip()
 
+    # Displaying game over and who won
+    screen.fill(BLACK)
+    font = pygame.font.SysFont('Calibri', 50, True, False)
+    game_over = font.render("GAME OVER", True, RED)
+    who_won_text = args.player1 if player2_lost else args.player1
+    who_won_text = "{} won!".format(who_won_text)
+    who_won = font.render(who_won_text, False, RED)
+    screen.blit(game_over, (50, 50))
+    screen.blit(who_won, (50, 200))
+    pygame.display.flip()
+    pygame.time.delay(3000)
+
     pygame.quit()
 
 if __name__ == "__main__":
@@ -150,6 +162,8 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--worms_number", type=int, default=3, help="Number of worms each player has")
     parser.add_argument("-t", "--time", type=int, default=10, help="Time per each player")
     parser.add_argument("--no_menu", action="store_true", help="Don't display menu")
+    parser.add_argument("--player1", type=str, default="Player1", help="Name of first player")
+    parser.add_argument("--player2", type=str, default="Player2", help="Name of second player")
     args = parser.parse_args()
 
     main(args)
