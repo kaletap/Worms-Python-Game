@@ -1,4 +1,3 @@
-#!opt/anaconda/bin/python
 import pygame, sys, random, os, time, string
 from math import cos, sin, pi as PI
 import defaults
@@ -311,7 +310,7 @@ class Player:
                 self.change_worm()
 
 
-def collided(worm: Worm, bullet: Bullet) -> bool: 
+def collided(worm: Worm, bullet: Bullet, sound_option=ON) -> bool: 
     """ Check whether worm and bullet collide.
     Returns False when bullet was shooted by worm 
     (we doesn't let worm shoot himself)"""
@@ -320,7 +319,7 @@ def collided(worm: Worm, bullet: Bullet) -> bool:
     else:
         coll = pygame.sprite.collide_rect(worm, bullet)
         # Make a sound if collided
-        if coll:
+        if coll and sound_option == ON:
             sound_path = os.path.join('sounds/hits', random.choice(defaults.hit_sound_paths))
             hit_sound = pygame.mixer.Sound(sound_path)
             hit_sound.play()
@@ -337,13 +336,20 @@ class TextObject(pygame.sprite.Sprite):
         self.y = y
 
         # We don't want to open this SysFont too many times
-        # it's better to pass it as an argument than create every time
+        # it's better to pass it as an argument than create each time
         self.font = font or pygame.font.SysFont('Calibri', font_size, bold, False)
 
         self.image = self.font.render(text, True, GREEN)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
+    def change_text(self, new_text):
+        """Changes text in displayed image"""
+        self.image = self.font.render(new_text, True, GREEN)
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
 
 
 class Menu:
@@ -358,7 +364,6 @@ class Menu:
         self.sound = ON
         self.time = 10
 
-        # TODO: are these fonts necessary here?
         self.font = pygame.font.SysFont('Calibri', 25, False, False)
         self.font_bold = pygame.font.SysFont('Calibri', 25, True, False)
 
@@ -390,22 +395,31 @@ class Menu:
 
     def update_options(self, x, y):
         if self.text_objects["language_option"].rect.collidepoint(x, y):
-            print("Changing language option")
+            #print("Changing language option")
             new_language_option = EN if self.language == PL else PL
             self.language = new_language_option
             self.text_objects["language_option"] = TextObject(new_language_option, 
                                                               *self.positions["language_option"], 
                                                               self.font)
+            if self.language == PL:
+                self.text_objects["time"].change_text("CZAS:")
+                self.text_objects["language"].change_text("Jezyk:")
+                self.text_objects["sound"].change_text("Dzwiek:")
+
+            elif self.language == EN:
+                self.text_objects["time"].change_text("TIME:")
+                self.text_objects["language"].change_text("Language:")
+                self.text_objects["sound"].change_text("Sound:")
 
         elif self.text_objects["sound_option"].rect.collidepoint(x, y):
-            print("Changing sound option")
-            new_sound_option = OF if self.sound == ON else ON
+            #print("Changing sound option")
+            new_sound_option = OFF if self.sound == ON else ON
             self.sound = new_sound_option
             self.text_objects["sound_option"] = TextObject(new_sound_option, 
                                                           *self.positions["sound_option"],
                                                           self.font)
 
-    def update_time(self, seconds, font):
+    def update_time(self, seconds, font=None):
         self.time = seconds
         self.text_objects["time_display"] = TextObject(str(seconds), 
                                                         *self.positions["time_display"], 
@@ -470,10 +484,6 @@ def main():
     # Creating Menu
     menu = Menu()
 
-    # Creating font for displaying time
-    font_bold = pygame.font.SysFont('Calibri', 25, True, False)
-    font_not_bold = pygame.font.SysFont('Calibri', 25, True, False)
-
     start = time.time()
     mode = PLAYER_1
     while True:
@@ -482,7 +492,7 @@ def main():
 
         # Calculating how much time is left
         total_seconds = int(time.time() - start)
-        menu.update_time(total_seconds, font_not_bold)
+        menu.update_time(total_seconds)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -507,7 +517,11 @@ def main():
                 player2.move(event)
 
         # Killling worms hitted by bullet
-        killed_worms = pygame.sprite.groupcollide(worm_list, bullet_list, dokilla=True, dokillb=True, collided=collided)
+        killed_worms = pygame.sprite.groupcollide(worm_list, 
+                                                  bullet_list, 
+                                                  dokilla=True, 
+                                                  dokillb=True, 
+                                                  collided=lambda x, y: collided(x, y, menu.sound))
         player1.remove_worms(killed_worms.keys())
         player2.remove_worms(killed_worms.keys())
 
