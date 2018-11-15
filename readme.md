@@ -16,5 +16,6 @@ In my game I used characters made by Fleurman: https://opengameart.org/content/t
 
 Sounds were made by Independent.nu:
 https://opengameart.org/content/37-hitspunches
+https://opengameart.org/content/16-button-clicks
 
 Both were shared under Public Domain License.

@@ -7,7 +7,7 @@ Wall
 Player
 """
 
-import pygame, sys
+import pygame, sys, random, string
 from math import cos, sin, pi as PI
 
 from defaults import *
@@ -59,6 +59,7 @@ class Worm(pygame.sprite.Sprite):
         self.shooting_angle = PI/4
         self.jumping = False
         self.shooting = False
+        self.shooting_power = 0
 
     def get_gunpoint_coordinates(self):
         if self.direction == "right":
@@ -129,7 +130,12 @@ class Worm(pygame.sprite.Sprite):
             elif event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
                 self.shooting = True
                 self.shooting_power = 0
-            
+
+        # If player changes worms while pressing K_LEFT or K_RIGHT worm might start moving
+        # in different direction. 
+        # It's not much of a problem because we control this worm, so we can stop him.
+        # But it can also happen during change of players: one player by pressing K_LEFT
+        # to long may cause another player to move
         if event.type == pygame.KEYUP:
             # Moving
             if event.key == pygame.K_LEFT:
@@ -289,6 +295,9 @@ class Player:
     def move(self, event, bullet_list):
         """Moves current worm"""
         self.current_worm.move(event, bullet_list)
+
+    def stop_worm(self):
+        self.current_worm.change_x = 0
         
     def change_worm(self):
         """Changes worm to next one"""

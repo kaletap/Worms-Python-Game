@@ -1,4 +1,4 @@
-import pygame, sys, random, os, time, string
+import pygame, sys, random, os, time, argparse
 from math import cos, sin, pi as PI
 
 import defaults
@@ -8,37 +8,38 @@ from utils import *
 from defaults import *
         
     
-def main():
+def main(args):
     pygame.init()
-    screen = pygame.display.set_mode([SCREEN_WIDTH + MENU_WIDTH, SCREEN_HEIGHT]) 
+    if args.no_menu:
+        screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+    else:
+        screen = pygame.display.set_mode([SCREEN_WIDTH + MENU_WIDTH, SCREEN_HEIGHT]) 
     pygame.display.set_caption("Worms") 
     clock = pygame.time.Clock()
 
-    # Sounds
-    pygame.mixer.init()
-
     # Creating sprite_sheet object (image containing all needed images)
-    sprite_sheet_path1 =  os.path.join("graphics/Males", "M_09.png")
+    sprite_sheet_path1 =  os.path.join("graphics/Males", random.choice(player1_image_paths))
     sprite_sheet1 = SpriteSheet(sprite_sheet_path1)
 
-    sprite_sheet_path2 = os.path.join("graphics/Females", "F_01.png")
+    sprite_sheet_path2 = os.path.join("graphics/Females", random.choice(player2_image_paths))
     sprite_sheet2 = SpriteSheet(sprite_sheet_path2)
 
     # Creating worms
-    worm = Worm(150, SCREEN_HEIGHT - 150, sprite_sheet1, name="artur")
-    worm2 = Worm(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 150, sprite_sheet2, name="dent")
-    worm3 = Worm(SCREEN_WIDTH - 300, SCREEN_HEIGHT - 150, sprite_sheet2, name="ford")
-    worm4 = Worm(SCREEN_WIDTH - 400, SCREEN_HEIGHT - 150, sprite_sheet1, name="prefect")
+    worms_player1 = [Worm(random.randrange(20, SCREEN_WIDTH-20),
+                   random.randrange(0, SCREEN_HEIGHT-10),
+                   sprite_sheet1) for _ in range(args.worms_number)]
+    worms_player2 = [Worm(random.randrange(20, SCREEN_WIDTH-20),
+                   random.randrange(0, SCREEN_HEIGHT-10),
+                   sprite_sheet2) for _ in range(args.worms_number)]
     # Group containing all worms
     worm_list = pygame.sprite.Group()
-    worm_list.add(worm, worm2, worm3, worm4)
+    worm_list.add(*worms_player1, *worms_player2)
 
     # Creating players
-    player1 = Player(worm, worm4, name="Przemek")
-    player2 = Player(worm2, worm3, name="Madzia")
+    player1 = Player(*worms_player1, name="Player1")
+    player2 = Player(*worms_player2, name="Player2")
 
     # Creating bullet
-    global bullet_list
     bullet_list = pygame.sprite.Group()
     bullet = Bullet(0, 100, direction="right", v=10, alpha=PI/4)
     bullet_list.add(bullet)
@@ -66,6 +67,9 @@ def main():
     # Creating Menu
     menu = Menu()
 
+    print("Welcome to worms")
+
+    # Playing game
     start = time.time()
     mode = PLAYER_1
     while True:
@@ -73,8 +77,19 @@ def main():
         screen.fill(BLACK)
 
         # Calculating how much time is left
-        total_seconds = int(time.time() - start)
-        menu.update_time(total_seconds)
+        time_left = args.time - int(time.time() - start)
+        menu.update_time(time_left)
+
+        # Changing players if time is up
+        if time_left < 0:
+            mode = PLAYER_2 if mode == PLAYER_1 else PLAYER_1
+            player1.stop_worm()
+            player2.stop_worm()
+            changing_players_text = TextObject("Changing players", 50, 50, font=None, font_size=50)
+            pygame.sprite.Group(changing_players_text).draw(screen)
+            pygame.time.delay(2000)
+            start = time.time()
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -131,7 +146,13 @@ def main():
     pygame.quit()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--worms_number", type=int, default=3, help="Number of worms each player has")
+    parser.add_argument("-t", "--time", type=int, default=10, help="Time per each player")
+    parser.add_argument("--no_menu", action="store_true", help="Don't display menu")
+    args = parser.parse_args()
+
+    main(args)
 
 
 

@@ -43,6 +43,8 @@ class Menu:
         self.font = pygame.font.SysFont('Calibri', 25, False, False)
         self.font_bold = pygame.font.SysFont('Calibri', 25, True, False)
 
+        self.click_sound = pygame.mixer.Sound("sounds/buttons_and_clicks/Clic07.mp3.flac")
+
         self.positions = {
             "menu": (x, y+10),
 
@@ -71,6 +73,8 @@ class Menu:
 
     def update_options(self, x, y):
         if self.text_objects["language_option"].rect.collidepoint(x, y):
+            if self.sound == ON:
+                self.click_sound.play()
             #print("Changing language option")
             new_language_option = EN if self.language == PL else PL
             self.language = new_language_option
@@ -88,6 +92,7 @@ class Menu:
                 self.text_objects["sound"].change_text("Sound:")
 
         elif self.text_objects["sound_option"].rect.collidepoint(x, y):
+            self.click_sound.play()
             #print("Changing sound option")
             new_sound_option = OFF if self.sound == ON else ON
             self.sound = new_sound_option
