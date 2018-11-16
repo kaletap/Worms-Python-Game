@@ -45,6 +45,10 @@ Sounds were made by Independent.nu:
 https://opengameart.org/content/37-hitspunches,
 https://opengameart.org/content/16-button-clicks
 
+and ViRiX (https://opengameart.org/content/ui-sound-effects-pack) shared under Creative Common Licence (https://creativecommons.org/licenses/by/3.0/)
+
 Music made by cynicmusic: https://opengameart.org/content/battle-theme-a
+
+If not mentioned otherwise all of the art above was shared under public domain license.
 
 
