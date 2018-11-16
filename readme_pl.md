@@ -5,9 +5,9 @@ Gra działa dla Pythona wersji >= 3.6.4 z zainstalowanym pygame >= 1.9.4. Nie dz
 ## Uruchamianie
 Grę można uruchomić w konsoli przez wpisanie `python worms.py`. Można też skorzystać z dodatkowych opcji takich jak wybór liczby robali na osobę, czasu na turę oraz nazwy gracza. Przykładowo:
 
-`python worms.py --time 15 --worms_number 5 --player1 Alice --player2 Bob`
+`python worms.py --time 15 --worms_number 5 --rounds 6 --player1 Alice --player2 Bob`
 
-uruchamia grę z czasem 15 sekund na turę, dla graczy mających po 5 robali, gdzie nazwy graczy to odpowiednio Alice i Bob.
+uruchamia grę z czasem 15 sekund na turę, dla graczy mających po 5 robali, gdzie nazwy graczy to odpowiednio Alice i Bob, i rozgrywka toczy się 5 razy.
 
 ## Rozgrywka
 ### Zasady
@@ -34,9 +34,21 @@ Stworzona przez użytkownika **Fleurman**:
 
 https://opengameart.org/content/tiny-characters-set
 
+**BananaOwl** 
+(https://opengameart.org/content/rainbow-ball) Creative Common License (https://creativecommons.org/licenses/by/3.0/).
+
 ### Dźwięk:
 **Independent.nu**:
 
 https://opengameart.org/content/37-hitspunches,
 https://opengameart.org/content/16-button-clicks
+
+**ViRiX** 
+
+(https://opengameart.org/content/ui-sound-effects-pack)
+
+**cynicmusic**: 
+
+https://opengameart.org/content/battle-theme-a
+
 

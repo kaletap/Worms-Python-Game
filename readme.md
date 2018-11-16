@@ -17,10 +17,6 @@ You can also use shortened options like this:
 
 `python worms.py -t 15 -n 5 -r 6 -p1 Alice -p2 Bob`
 
-This will create
-
-
-
 
 ## Playing instructions
 ### Overview
