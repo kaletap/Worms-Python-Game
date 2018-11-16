@@ -45,6 +45,7 @@ class Menu:
         self.font_time = pygame.font.SysFont('Calibri', 70, True, False)
 
         self.click_sound = pygame.mixer.Sound("sounds/buttons_and_clicks/Clic07.mp3.flac")
+        self.change_player_sound = pygame.mixer.Sound("sounds/UI_pack_1/ALERT_Appear.wav")
 
         self.positions = {
             "menu": (x, y+10),
@@ -100,8 +101,14 @@ class Menu:
             self.text_objects["sound_option"] = TextObject(new_sound_option, 
                                                           *self.positions["sound_option"],
                                                           self.font)
+            if self.sound == ON:
+                pygame.mixer.music.play()
+            else:
+                pygame.mixer.music.pause()
 
     def update_time(self, seconds, font=None):
+        if self.sound == ON and seconds == 2:
+            self.change_player_sound.play()
         self.time = seconds
         self.text_objects["time_display"] = TextObject(str(seconds), 
                                                         *self.positions["time_display"], 

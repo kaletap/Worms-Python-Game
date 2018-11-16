@@ -29,18 +29,22 @@ Even though this game is called Worms, I use people characters in it, but still 
 
 It's worth to remember, that the longer you press enter, the faster the bullet moves. 
 
-You can change sound / no sound options and language by clicking on text in menu.
+You can change sound / no sound options and language in the menu by clicking on text.
 
 ## Technical details
 Game may run slower or faster on different peoples computers. If you think that it runs too fast or too slow you may want to change FRAME_RATE located in `defaults.py`. Also, you may want to play around with GRAV and GRAV_WORM which are responsible for gravitation working on bullet and worms respectively. Running worms.py with --no_menu option also makes game faster (I don't know why).
 
-This project implements some that original Worms 2D have. It's possible to make it better by adding better graphics and some cool features (like different weapons and tools, implementing wind etc.) and by improving existing features a little bit. One thing that it's lacking though, and I don't know what to do about it, is having diversified and interactive environment consisting of something more than just rectangles. It is something I will think about in the future.
+This project implements some features that original Worms 2D have. It's possible to make it better by adding better graphics and some cool features (like different weapons and tools, implementing wind etc.) and by improving existing features a little bit. One thing that it's lacking though, and I don't know what to do about it, is having diversified and interactive environment consisting of something more than just rectangles. It is something I will think about in the future.
 
 ## Credits
 In my game I used characters made by Fleurman: https://opengameart.org/content/tiny-characters-set
+
+Ball image was created by BananaOwl (https://opengameart.org/content/rainbow-ball) and shared under Creative Common License (https://creativecommons.org/licenses/by/3.0/).
 
 Sounds were made by Independent.nu:
 https://opengameart.org/content/37-hitspunches,
 https://opengameart.org/content/16-button-clicks
 
-All above were shared under Public Domain License.
+Music made by cynicmusic: https://opengameart.org/content/battle-theme-a
+
+

@@ -20,6 +20,14 @@ def main(args):
     pygame.display.set_caption("Worms") 
     clock = pygame.time.Clock()
 
+    # Music 
+    music_path = "sounds/battleTheme.mp3"
+    pygame.mixer.music.load(music_path)
+    pygame.mixer.music.play()
+
+    # Background image
+    background = pygame.image.load("graphics/RedPlanet.png").convert()
+
     # Creating sprite_sheet object (image containing all needed images)
     sprite_sheet_path1 =  os.path.join("graphics/Males", random.choice(player1_image_paths))
     sprite_sheet1 = SpriteSheet(sprite_sheet_path1)
@@ -28,11 +36,11 @@ def main(args):
     sprite_sheet2 = SpriteSheet(sprite_sheet_path2)
 
     # Creating worms
-    worms_player1 = [Worm(random.randrange(20, SCREEN_WIDTH-20),
-                   random.randrange(0, SCREEN_HEIGHT-10),
+    worms_player1 = [Worm(random.randrange(20, SCREEN_WIDTH-30),
+                   random.randrange(0, SCREEN_HEIGHT-20),
                    sprite_sheet1) for _ in range(args.worms_number)]
-    worms_player2 = [Worm(random.randrange(20, SCREEN_WIDTH-20),
-                   random.randrange(0, SCREEN_HEIGHT-10),
+    worms_player2 = [Worm(random.randrange(20, SCREEN_WIDTH-30),
+                   random.randrange(0, SCREEN_HEIGHT-20),
                    sprite_sheet2) for _ in range(args.worms_number)]
     # Group containing all worms
     worm_list = pygame.sprite.Group()
@@ -75,8 +83,9 @@ def main(args):
     start = time.time()
     mode = PLAYER_1
     while not done:
-        # Filling screen with black 
+        # Filling screen with black and adding background image
         screen.fill(BLACK)
+        #screen.blit(background, (0, 0))
 
         # Calculating how much time is left
         time_left = args.time - int(time.time() - start)
@@ -149,9 +158,10 @@ def main(args):
 
     # Displaying game over and who won
     screen.fill(BLACK)
+    screen.blit(background, (SCREEN_WIDTH // 2, 0))
     font = pygame.font.SysFont('Calibri', 50, True, False)
     game_over = font.render("GAME OVER", True, RED)
-    who_won_text = args.player1 if player2_lost else args.player1
+    who_won_text = args.player1 if player2_lost else args.player2
     who_won_text = "{} won!".format(who_won_text)
     who_won = font.render(who_won_text, False, RED)
     screen.blit(game_over, (50, 50))
