@@ -7,16 +7,24 @@ This script was tested on Python 3.6.4 with pygame version 1.9.4. It doesn't wor
 I assume that you already have Python installed (preferably version >= 3.6).
 To install pygame run `pip install pygame`.  To play a game run `python worm.py`.
 
-There are a few options available when starting a game. You can choose number of worms each player has, time for each round and names of players. For example:
+There are a few options available when starting a game. You can choose number of worms each player has, time for each round, number of games, names of players. For example:
 
-`python worms.py --time 15 --worms_number 5 --player1 Alice --player2 Bob`
+`python worms.py --time 15 --worms_number 5 --rounds 6 --player1 Alice --player2 Bob`
 
-This will run a game with 15 seconds per each player, 5 worms per each player, player1 and player2 will be called Alice and Bob respectively. Additionaly, you can use `--no_menu` option to hide menu on the right.
+This will run a game with 15 seconds per each player, 5 worms per each player, 6 games in total, player1 and player2 will be called Alice and Bob respectively. Additionaly, you can use `--no_menu` option to hide menu on the right. By default worms_number is 3 and time is 10.
+
+You can also use shortened options like this:
+
+`python worms.py -t 15 -n 5 -r 6 -p1 Alice -p2 Bob`
+
+This will create
+
+
 
 
 ## Playing instructions
 ### Overview
-Even though this game is called Worms, I use people characters in it, but still refer to them as "worms". Game starts with worms in randomly generated places. Each player has some amount of time per round. Players choose which worm to use, control them, move them right and left, jump, aim and shoot trying to kill opponent's worms. They have limited time to do it, so you have to be fast. Also, be careful not to shoot your own worm!
+Even though this game is called Worms, I use people characters in it, but still refer to them as "worms". Game starts with worms in randomly generated places. Each player has some amount of time per round. Players choose which worm to use, control them, move them right and left, jump, aim and shoot trying to kill opponent's worms. They have limited time to do it, so you have to be fast (you will hear a sound 2 seconds before the end indicating that your time is up). Also, be careful not to shoot your own worm!
 
 ### Controlling
 * **left arrow** : moving left
@@ -37,17 +45,17 @@ Game may run slower or faster on different peoples computers. If you think that 
 This project implements some features that original Worms 2D have. It's possible to make it better by adding better graphics and some cool features (like different weapons and tools, implementing wind etc.) and by improving existing features a little bit. One thing that it's lacking though, and I don't know what to do about it, is having diversified and interactive environment consisting of something more than just rectangles. It is something I will think about in the future.
 
 ## Credits
-In my game I used characters made by Fleurman: https://opengameart.org/content/tiny-characters-set
+In my game I used characters made by **Fleurman**: https://opengameart.org/content/tiny-characters-set
 
-Ball image was created by BananaOwl (https://opengameart.org/content/rainbow-ball) and shared under Creative Common License (https://creativecommons.org/licenses/by/3.0/).
+Ball image was created by **BananaOwl** (https://opengameart.org/content/rainbow-ball) and shared under Creative Common License (https://creativecommons.org/licenses/by/3.0/).
 
-Sounds were made by Independent.nu:
+Sounds were made by **Independent.nu**:
 https://opengameart.org/content/37-hitspunches,
 https://opengameart.org/content/16-button-clicks
 
-and ViRiX (https://opengameart.org/content/ui-sound-effects-pack) shared under Creative Common Licence (https://creativecommons.org/licenses/by/3.0/)
+and **ViRiX** (https://opengameart.org/content/ui-sound-effects-pack) shared under Creative Common Licence (https://creativecommons.org/licenses/by/3.0/)
 
-Music made by cynicmusic: https://opengameart.org/content/battle-theme-a
+Music made by **cynicmusic**: https://opengameart.org/content/battle-theme-a
 
 If not mentioned otherwise all of the art above was shared under public domain license.
 

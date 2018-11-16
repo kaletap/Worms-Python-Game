@@ -304,6 +304,8 @@ class Player:
         self.current_worm.change_x = 0
         self.current_worm.pressed_left = False
         self.current_worm.pressed_right = False
+        self.current_worm.jumping = False
+        self.current_worm.shooting = False
         
     def change_worm(self):
         """Changes worm to next one"""
