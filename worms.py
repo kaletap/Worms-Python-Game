@@ -1,4 +1,4 @@
-#!/opt/anaconda/bin//python
+#!/opt/anaconda/bin/python
 import pygame, sys, random, os, time, argparse
 from math import cos, sin, pi as PI
 
